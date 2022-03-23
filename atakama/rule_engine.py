@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 class RequestType(Enum):
