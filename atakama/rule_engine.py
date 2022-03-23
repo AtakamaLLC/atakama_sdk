@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 class RequestType(Enum):
@@ -76,6 +77,10 @@ class RulePlugin(Plugin):
     In addition to standard arguments from the policy, file a unique
     `rule_id` is injected, if not present.
     """
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.rule_id = args["rule_id"]
 
     @abc.abstractmethod
     def approve_request(self, request: ApprovalRequest) -> Optional[bool]:
@@ -168,9 +173,16 @@ class RuleSet(List[RulePlugin]):
 
     def approve_request(self, request: ApprovalRequest) -> bool:
         """Return true if all rules return true."""
-        for rule in self:  # pylint: disable=not-an-iterable
+        for i, rule in enumerate(self):  # pylint: disable=not-an-iterable
             try:
                 res = rule.approve_request(request)
+                log.debug(
+                    "RuleSet.approve_request[%s]: rule_id=%s i=%i res=%s",
+                    request.request_type,
+                    rule.rule_id,
+                    i,
+                    res,
+                )
                 if res is None:
                     log.error("unknown request type error in rule %s", rule)
                 if not res:
@@ -197,10 +209,17 @@ class RuleSet(List[RulePlugin]):
         return lst
 
     def at_quota(self, profile: ProfileInfo) -> bool:
-        for rule in self:  # pylint: disable=not-an-iterable
+        """Returns True if the given profile is at quota for any rule in the RuleSet."""
+        for i, rule in enumerate(self):  # pylint: disable=not-an-iterable
             try:
                 res = rule.at_quota(profile)
                 if res:
+                    log.debug(
+                        "RuleSet.at_quota: is at quota rule_id=%s i=%i profile=%s",
+                        rule.rule_id,
+                        i,
+                        profile.profile_id,
+                    )
                     return True
             except Exception as ex:
                 log.error("error in rule %s: %s", rule, repr(ex))
@@ -217,8 +236,14 @@ class RuleTree(List[RuleSet]):
 
     def approve_request(self, request: ApprovalRequest) -> bool:
         """Return true if any ruleset returns true."""
-        for rset in self:  # pylint: disable=not-an-iterable
+        for i, rset in enumerate(self):  # pylint: disable=not-an-iterable
             res = rset.approve_request(request)
+            log.debug(
+                "RuleTree.approve_request[%s]: set=%i res=%s",
+                request.request_type,
+                i,
+                res,
+            )
             if res:
                 return True
         return False
@@ -259,12 +284,16 @@ class RuleEngine:
     def approve_request(self, request: ApprovalRequest) -> Optional[bool]:
         tree = self.map.get(request.request_type, None)
         if tree is None:
+            log.debug(
+                "RuleEngine.approve_request: no tree for type %s", request.request_type
+            )
             return None
         return tree.approve_request(request)
 
     @classmethod
     def from_yml_file(cls, yml: Union["Path", str]):
         """Build a rule engine from a yml file, see `from_dict` for more info."""
+        log.debug("from_yml_file loading %s", yml)
         with open(yml, "r", encoding="utf8") as fh:
             info: dict = yaml.safe_load(fh)
             return cls.from_dict(info)

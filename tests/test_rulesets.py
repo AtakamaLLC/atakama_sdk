@@ -64,7 +64,7 @@ def test_simple_rule():
                 return True
             return False
 
-    rs = RuleSet([ExampleRule({})])
+    rs = RuleSet([ExampleRule({"rule_id": "rid"})])
 
     assert rs.approve_request(TestApprovalRequest(device_id=b"3"))
     assert not rs.approve_request(TestApprovalRequest(device_id=b"4"))
@@ -84,7 +84,7 @@ def test_errs():
                 raise ValueError
             return None
 
-    rs = RuleSet([ExampleRule({})])
+    rs = RuleSet([ExampleRule({"rule_id": "rid"})])
 
     assert rs.approve_request(TestApprovalRequest(device_id=b"3"))
     assert rs.approve_request(TestApprovalRequest(device_id=b"4")) is False
@@ -215,7 +215,9 @@ def test_clear_quota():
         def approve_request(self, request):
             return True
 
-    rs = RuleSet([ExampleRule({"limit": 2}), ExampleOtherRule({})])
+    rs = RuleSet(
+        [ExampleRule({"limit": 2, "rule_id": "1"}), ExampleOtherRule({"rule_id": "2"})]
+    )
     re = RuleEngine({RequestType.DECRYPT: RuleTree([rs])})
 
     # limit 2

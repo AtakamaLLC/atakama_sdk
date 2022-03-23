@@ -56,7 +56,7 @@ In addition to standard arguments from the policy, file a unique
 
 
 
-#### .approve_request(self, request: atakama.rule_engine.ApprovalRequest) -> Optional[bool]
+#### .approve\_request(self, request: atakama.rule\_engine.ApprovalRequest) -> Optional[bool]
 
 Return True if the request to decrypt a file will be authorized.
 
@@ -72,7 +72,7 @@ This is called any time:
 See the RequestType class for more information.
 
 
-#### .at_quota(self, profile: atakama.rule_engine.ProfileInfo) -> Optional[bool]
+#### .at\_quota(self, profile: atakama.rule\_engine.ProfileInfo) -> Optional[bool]
 
 Returns True if the profile will not be approved in the next request.
 Returns False if the profile *may* be approved for access, and is not past a limit.
@@ -82,7 +82,7 @@ This is not a guarantee of future approval, it's a way of checking to see if any
 reached any limits, quotas or other stateful things for reporting purposed.
 
 
-#### .clear_quota(self, profile: atakama.rule_engine.ProfileInfo) -> None
+#### .clear\_quota(self, profile: atakama.rule\_engine.ProfileInfo) -> None
 
 Reset or clear any limits, quotas, access counts, bytes-transferred for a given profile.
 
@@ -99,8 +99,11 @@ An empty ruleset always returns True
 
 
 
-#### .approve_request(self, request: atakama.rule_engine.ApprovalRequest) -> bool
+#### .approve\_request(self, request: atakama.rule\_engine.ApprovalRequest) -> bool
 Return true if all rules return true.
+
+#### .at\_quota(self, profile: atakama.rule\_engine.ProfileInfo) -> bool
+Returns True if the given profile is at quota for any rule in the RuleSet.
 
 
 ## RuleTree(list)
@@ -111,7 +114,7 @@ Returns False if all RuleSets return False.
 
 
 
-#### .approve_request(self, request: atakama.rule_engine.ApprovalRequest) -> bool
+#### .approve\_request(self, request: atakama.rule\_engine.ApprovalRequest) -> bool
 Return true if any ruleset returns true.
 
 
