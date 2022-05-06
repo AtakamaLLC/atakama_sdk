@@ -26,9 +26,8 @@ class RequestType(Enum):
     DECRYPT = "decrypt"
     SEARCH = "search"
     CREATE_PROFILE = "create_profile"
-    ACTIVATE_LOCATION = "activate_location"
     CREATE_LOCATION = "create_location"
-    RENAME_FILE = "rename"
+    RENAME = "rename"
     SECURE_EXPORT = "secure_export"
 
 
