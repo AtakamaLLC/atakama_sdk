@@ -87,7 +87,7 @@ class RulePlugin(Plugin):
     @abc.abstractmethod
     def approve_request(self, request: ApprovalRequest) -> Optional[bool]:
         """
-        Return True if the request to decrypt a file will be authorized.
+        Return True if the request will be authorized.
 
         Return False if the request is to be denied.
         Raise None if the request type is unknown or invalid.
@@ -99,6 +99,13 @@ class RulePlugin(Plugin):
             a decryption agent wishes to perform other multifactor request types.
 
         See the RequestType class for more information.
+        """
+
+    def use_quota(self, request: ApprovalRequest):
+        """
+        Given that a request has already been authorized via approve_request(), indicate
+        that this rule is being used for request approval and any intneral counters
+        should be incremented.
         """
 
     def at_quota(self, profile: ProfileInfo) -> Optional[bool]:
@@ -191,6 +198,14 @@ class RuleSet(List[RulePlugin]):
                     return False
             except Exception as ex:
                 log.error("error in rule %s: %s", rule, repr(ex))
+                return False
+
+        # Rule set succeeded, so now inc the quota counts
+        for i, rule in enumerate(self):  # pylint: disable=not-an-iterable
+            try:
+                rule.use_quota(request)
+            except Exception as ex:
+                log.error("error in rule use_quota %s: %s", rule, repr(ex))
                 return False
         return True
 

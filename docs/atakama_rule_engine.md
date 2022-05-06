@@ -58,7 +58,7 @@ In addition to standard arguments from the policy, file a unique
 
 #### .approve\_request(self, request: atakama.rule\_engine.ApprovalRequest) -> Optional[bool]
 
-Return True if the request to decrypt a file will be authorized.
+Return True if the request will be authorized.
 
 Return False if the request is to be denied.
 Raise None if the request type is unknown or invalid.
@@ -87,6 +87,13 @@ reached any limits, quotas or other stateful things for reporting purposed.
 Reset or clear any limits, quotas, access counts, bytes-transferred for a given profile.
 
 Used by an administrator to "clear" or "reset" a user that has hit limits.
+
+
+#### .use\_quota(self, request: atakama.rule\_engine.ApprovalRequest)
+
+Given that a request has already been authorized via approve_request(), indicate
+that this rule is being used for request approval and any intneral counters
+should be incremented.
 
 
 

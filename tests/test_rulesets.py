@@ -321,3 +321,92 @@ def test_rule_id_loads(tmp_path):
         ]
     }
     assert re.to_dict() == expect
+
+
+def test_rule_ordering(tmp_path):
+    class ExampleRule(RulePlugin):
+        @staticmethod
+        def name():
+            return "exrule"
+
+        def approve_request(self, request):
+            if "target" in self.args:
+                return approve_target
+            return approve_other
+
+        def use_quota(self, request):
+            nonlocal used
+            if "target" in self.args:
+                used += 1
+
+    approve_target, approve_other = False, False
+    used = 0
+    rule_yml = tmp_path / "rules.yml"
+
+    info = {
+        RequestType.DECRYPT.value: [
+            [
+                {"rule": "exrule", "target": "yes"},
+                {"rule": "exrule"},
+            ],
+        ],
+    }
+    with rule_yml.open("w") as f:
+        json.dump(info, f)
+    rs = RuleEngine.from_yml_file(rule_yml)
+
+    # Failure in either rule in ruleset
+    approve_target = True
+    approve_other = False
+    assert not rs.approve_request(TestApprovalRequest(device_id=b"okany"))
+    assert used == 0
+
+    approve_target = False
+    approve_other = True
+    assert not rs.approve_request(TestApprovalRequest(device_id=b"okany"))
+    assert used == 0
+
+    # Both approve
+    approve_target = True
+    approve_other = True
+    assert rs.approve_request(TestApprovalRequest(device_id=b"okany"))
+    assert used == 1
+
+    # The first rule set to approve is the one that's used
+    info = {
+        RequestType.DECRYPT.value: [
+            [
+                {"rule": "exrule", "target": "yes"},
+            ],
+            [
+                {"rule": "exrule"},
+            ],
+        ],
+    }
+    with rule_yml.open("w") as f:
+        json.dump(info, f)
+    rs = RuleEngine.from_yml_file(rule_yml)
+    assert rs.approve_request(TestApprovalRequest(device_id=b"okany"))
+    assert used == 2
+
+    info = {
+        RequestType.DECRYPT.value: [
+            [
+                {"rule": "exrule"},
+            ],
+            [
+                {"rule": "exrule", "target": "yes"},
+            ],
+        ],
+    }
+    with rule_yml.open("w") as f:
+        json.dump(info, f)
+    rs = RuleEngine.from_yml_file(rule_yml)
+    assert rs.approve_request(TestApprovalRequest(device_id=b"okany"))
+    assert used == 2
+
+    # Skipping from first failed rule set to second
+    approve_other = False
+    rs = RuleEngine.from_yml_file(rule_yml)
+    assert rs.approve_request(TestApprovalRequest(device_id=b"okany"))
+    assert used == 3
