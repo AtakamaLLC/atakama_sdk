@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 import json
+from multiprocessing.pool import ThreadPool
 
 import yaml
 
@@ -416,3 +417,42 @@ def test_rule_ordering(tmp_path):
     # Exception in rule use
     throw = True
     assert not rs.approve_request(TestApprovalRequest(device_id=b"okany"))
+
+
+def test_atomic_ruleset_evaluation(tmp_path):
+    class ExampleRule(RulePlugin):
+        @staticmethod
+        def name():
+            return "exrule"
+
+        def approve_request(self, request):
+            return used < 50
+
+        def use_quota(self, request):
+            nonlocal used
+            used += 1
+
+    used = 0
+    approvals = 0
+    rule_yml = tmp_path / "rules.yml"
+    info = {
+        RequestType.DECRYPT.value: [
+            [
+                {"rule": "exrule"},
+            ],
+        ],
+    }
+    with rule_yml.open("w") as f:
+        json.dump(info, f)
+    rs = RuleEngine.from_yml_file(rule_yml)
+
+    def make_req(_):
+        nonlocal approvals
+        if rs.approve_request(TestApprovalRequest(device_id=b"okany")):
+            approvals += 1
+
+    thread_pool = ThreadPool(10)
+    thread_pool.map(make_req, range(100))
+
+    assert used == 50
+    assert approvals == 50
