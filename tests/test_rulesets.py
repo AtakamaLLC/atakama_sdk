@@ -338,8 +338,10 @@ def test_rule_ordering(tmp_path):
             nonlocal used
             if "target" in self.args:
                 used += 1
+                if throw:
+                    raise Exception("exc")
 
-    approve_target, approve_other = False, False
+    approve_target, approve_other, throw = False, False, False
     used = 0
     rule_yml = tmp_path / "rules.yml"
 
@@ -410,3 +412,7 @@ def test_rule_ordering(tmp_path):
     rs = RuleEngine.from_yml_file(rule_yml)
     assert rs.approve_request(TestApprovalRequest(device_id=b"okany"))
     assert used == 3
+
+    # Exception in rule use
+    throw = True
+    assert not rs.approve_request(TestApprovalRequest(device_id=b"okany"))
