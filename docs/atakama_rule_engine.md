@@ -41,6 +41,15 @@ If no tree is available, will return None, so the caller can determine the defau
 
 
 
+#### .approve\_request(self, request: atakama.rule\_engine.ApprovalRequest) -> Optional[int]
+Returns the associated ruleset id, if any ruleset matches.
+
+#### .get\_rule\_set(self, rs\_id: int) -> atakama.rule\_engine.RuleSet
+Given a ruleset id, return the associated RuleSet.
+
+Raises IndexError if not found.
+
+
 
 ## RulePlugin(Plugin)
 
@@ -92,7 +101,7 @@ Used by an administrator to "clear" or "reset" a user that has hit limits.
 #### .use\_quota(self, request: atakama.rule\_engine.ApprovalRequest)
 
 Given that a request has already been authorized via approve_request(), indicate
-that this rule is being used for request approval and any intneral counters
+that this rule is being used for request approval and any internal counters
 should be incremented.
 
 
@@ -112,16 +121,19 @@ Return true if all rules return true.
 #### .at\_quota(self, profile: atakama.rule\_engine.ProfileInfo) -> bool
 Returns True if the given profile is at quota for any rule in the RuleSet.
 
+#### .find\_rules(self, rule\_type: Type[atakama.rule\_engine.RulePlugin])
+Given a rule engine class type, return the list of rules defined with that class.
+
 
 ## RuleTree(list)
 A list of RuleSet objects.
 
-Return True if *any* RuleSet returns True.
+Return the ruleset id if *any* RuleSet returns True.
 Returns False if all RuleSets return False.
 
 
 
-#### .approve\_request(self, request: atakama.rule\_engine.ApprovalRequest) -> bool
-Return true if any ruleset returns true.
+#### .approve\_request(self, request: atakama.rule\_engine.ApprovalRequest) -> Union[bool, int]
+Return the ruleset id if any ruleset returns true, otherwise False.
 
 

@@ -30,6 +30,7 @@ class RequestType(Enum):
     CREATE_LOCATION = "create_location"
     RENAME = "rename"
     SECURE_EXPORT = "secure_export"
+    START_SESSION = "start_session"
 
 
 @dataclass
